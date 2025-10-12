@@ -124,8 +124,3 @@ header h1 {
     background-color: var(--jeopardy-gold);
     color: #000;
 }
-
-#modal button:hover {
-    background-color: var(--jeopardy-blue);
-    color: #fff;
-}
