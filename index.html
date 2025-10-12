@@ -4,18 +4,141 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CS 122 Midterm Jeopardy Review</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --jeopardy-blue: #060ce9;
+            --jeopardy-gold: #ffcc00;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', sans-serif;
+            background-color: #111;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header h1 {
+            color: var(--jeopardy-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .category, .clue {
+            background-color: var(--jeopardy-blue);
+            padding: 20px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        .category {
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+            font-size: 1.1em;
+        }
+
+        .clue {
+            color: var(--jeopardy-gold);
+            font-size: 2.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .clue:hover {
+            transform: scale(1.05);
+        }
+
+        .clue.answered {
+            background-color: #333;
+            color: #555;
+            cursor: not-allowed;
+            pointer-events: none;
+            font-size: 1.5em;
+        }
+
+        /* Modal is hidden by default with display: none */
+        #modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #modal-content {
+            background-color: var(--jeopardy-blue);
+            padding: 40px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 900px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 5px solid var(--jeopardy-gold);
+        }
+
+        #question-text {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        #answer-text {
+            font-size: 1.8em;
+            margin-top: 20px;
+            color: var(--jeopardy-gold);
+            font-weight: bold;
+        }
+
+        .answer-hidden {
+            display: none;
+        }
+
+        #modal button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--jeopardy-gold);
+            color: #000;
+        }
+    </style>
 </head>
 <body>
 
     <header>
-        <h1>CS 122: Object-Oriented Programming Midterm Review</h1>
+        <h1>CS 122: OBJECT-ORIENTED PROGRAMMING MIDTERM REVIEW</h1>
     </header>
 
     <div id="game-board">
         </div>
     
-    <div id="modal" class="modal-hidden">
+    <div id="modal">
         <div id="modal-content">
             <div id="question-text"></div>
             <button id="reveal-answer-btn">Reveal Answer</button>
@@ -24,7 +147,142 @@
         </div>
     </div>
     
-    <script src="script.js"></script>
+    <script>
+        // Wait for the entire page to load before running the script
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const gameData = [
+                {
+                    category: "Java Fundamentals",
+                    questions: [
+                        { points: 100, answer: "The machine that runs Java bytecode, enabling the 'Write Once, Run Anywhere' principle.", question: "What is the JVM (Java Virtual Machine)?" },
+                        { points: 200, answer: "This type of error, like a missing semicolon, is caught by the compiler before the program can run.", question: "What is a compile-time error?" },
+                        { points: 300, answer: "The four components of the `main` method signature are `public`, `static`, `void`, and this parameter.", question: "What is `String[] args`?" },
+                        { points: 400, answer: "This keyword marks a variable as a constant whose value cannot be changed after initialization.", question: "What is `final`?" },
+                        { points: 500, answer: "A program that runs without errors but produces an incorrect result has this type of error.", question: "What is a logical error?" }
+                    ]
+                },
+                {
+                    category: "Data & Input",
+                    questions: [
+                        { points: 100, answer: "Java's 8 of these include `int`, `double`, `char`, and `boolean`.", question: "What are primitive data types?" },
+                        { points: 200, answer: "This class must be imported from `java.util` to get input from the user.", question: "What is the `Scanner` class?" },
+                        { points: 300, answer: "While a `char` is in single quotes, this object type for text is in double quotes.", question: "What is a `String`?" },
+                        { points: 400, answer: "The naming convention for variables like `studentName` or `courseCode`.", question: "What is camelCase?" },
+                        { points: 500, answer: "The object representation for the primitive `int`.", question: "What is the `Integer` wrapper class?" }
+                    ]
+                },
+                {
+                    category: "Operators & Casting",
+                    questions: [
+                        { points: 100, answer: "This arithmetic operator gives you the remainder of a division.", question: "What is the modulo operator (`%`)?" },
+                        { points: 200, answer: "The result of the integer division expression `9 / 2`.", question: "What is 4?" },
+                        { points: 300, answer: "This is the shorthand operator for `x = x + 1;`.", question: "What is `x++` (or `++x`)?" },
+                        { points: 400, answer: "The term for explicitly converting a value, such as `(int) 3.14`.", question: "What is type casting?" },
+                        { points: 500, answer: "The final string output from the expression `\"Result: \" + 5 + 3`.", question: "What is `\"Result: 53\"`?" }
+                    ]
+                },
+                {
+                    category: "String Mania",
+                    questions: [
+                        { points: 100, answer: "This method returns the number of characters in a String.", question: "What is `.length()`?" },
+                        { points: 200, answer: "The principle that once a String is created, it cannot be changed.", question: "What is immutability?" },
+                        { points: 300, answer: "The correct method to compare the contents of two Strings, not `==`.", question: "What is `.equals()`?" },
+                        { points: 400, answer: "Given `String s = \"Java\";`, this method call returns the character `'v'`.", question: "What is `s.charAt(2)`?" },
+                        { points: 500, answer: "Given `String url = \"www.pace.edu\";`, this call extracts the substring `\"pace\"`.", question: "What is `url.substring(4, 8)`?" }
+                    ]
+                },
+                {
+                    category: "Control Flow & Arrays",
+                    questions: [
+                        { points: 100, answer: "This statement executes a block of code only if a condition is true.", question: "What is an `if` statement?" },
+                        { points: 200, answer: "This logical operator (`||`) returns true if at least one of its conditions is true.", question: "What is the OR operator?" },
+                        { points: 300, answer: "The index of the very first element in an array.", question: "What is 0?" },
+                        { points: 400, answer: "This type of loop is ideal when you know exactly how many times you want to repeat code.", question: "What is a `for` loop?" },
+                        { points: 500, answer: "The keyword used to exit a `switch` case or terminate a loop prematurely.", question: "What is `break`?" }
+                    ]
+                },
+                {
+                    category: "OOP Pillars",
+                    questions: [
+                        { points: 100, answer: "A blueprint or template for creating objects.", question: "What is a Class?" },
+                        { points: 200, answer: "This special method shares the class name and initializes a new object.", question: "What is a Constructor?" },
+                        { points: 300, answer: "Bundling data and methods together, controlling access with getters/setters.", question: "What is Encapsulation?" },
+                        { points: 400, answer: "The principle where a child class acquires properties from a parent class.", question: "What is Inheritance?" },
+                        { points: 500, answer: "A class that cannot be instantiated and is a template for subclasses.", question: "What is an Abstract Class?" }
+                    ]
+                }
+            ];
+
+            const gameBoard = document.getElementById('game-board');
+            const modal = document.getElementById('modal');
+            const questionText = document.getElementById('question-text');
+            const answerText = document.getElementById('answer-text');
+            const revealAnswerBtn = document.getElementById('reveal-answer-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+
+            // --- Game Board Generation ---
+            function setupBoard() {
+                // Create category headers
+                gameData.forEach((cat) => {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.classList.add('category');
+                    categoryDiv.textContent = cat.category;
+                    gameBoard.appendChild(categoryDiv);
+                });
+
+                // Create clue squares
+                for (let i = 0; i < 5; i++) { // For each point value
+                    gameData.forEach((cat, catIndex) => { // For each category
+                        const clue = cat.questions[i];
+                        const clueDiv = document.createElement('div');
+                        clueDiv.classList.add('clue');
+                        clueDiv.textContent = `$${clue.points}`;
+                        clueDiv.dataset.catIndex = catIndex;
+                        clueDiv.dataset.clueIndex = i;
+                        gameBoard.appendChild(clueDiv);
+                    });
+                }
+            }
+
+            let activeClue = null;
+
+            // --- Event Listeners ---
+            gameBoard.addEventListener('click', (e) => {
+                const clueElement = e.target;
+                if (clueElement.classList.contains('clue') && !clueElement.classList.contains('answered')) {
+                    activeClue = clueElement;
+                    const { catIndex, clueIndex } = activeClue.dataset;
+                    const questionData = gameData[catIndex].questions[clueIndex];
+                    
+                    // Populate and show the modal
+                    questionText.textContent = questionData.answer;
+                    answerText.textContent = questionData.question;
+                    
+                    answerText.classList.add('answer-hidden');
+                    revealAnswerBtn.style.display = 'block';
+                    modal.style.display = 'flex'; // This makes the modal visible
+                }
+            });
+
+            revealAnswerBtn.addEventListener('click', () => {
+                answerText.classList.remove('answer-hidden');
+                revealAnswerBtn.style.display = 'none';
+            });
+            
+            closeModalBtn.addEventListener('click', () => {
+                modal.style.display = 'none'; // This hides the modal
+                if (activeClue) {
+                    activeClue.classList.add('answered');
+                    activeClue.textContent = 'DONE';
+                    activeClue = null;
+                }
+            });
+
+            // --- Initialize the Game ---
+            setupBoard();
+        });
+    </script>
 
 </body>
 </html>
