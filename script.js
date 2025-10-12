@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.getElementById('close-modal-btn');
 
     // Generate the game board
-    gameData.forEach((cat, catIndex) => {
+    gameData.forEach((cat) => {
         const categoryDiv = document.createElement('div');
         categoryDiv.classList.add('category');
         categoryDiv.textContent = cat.category;
@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeClue = null;
 
+    // Set the initial state of the modal to be hidden
+    modal.style.display = 'none';
+
     // Event listener for clicking a clue
     gameBoard.addEventListener('click', (e) => {
         if (e.target.classList.contains('clue') && !e.target.classList.contains('answered')) {
@@ -104,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             answerText.classList.add('answer-hidden');
             revealAnswerBtn.style.display = 'block';
-            modal.classList.remove('modal-hidden');
+            modal.style.display = 'flex'; // Show the modal
         }
     });
 
@@ -116,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener for closing the modal
     closeModalBtn.addEventListener('click', () => {
-        modal.classList.add('modal-hidden');
+        modal.style.display = 'none'; // Hide the modal
         if (activeClue) {
             activeClue.classList.add('answered');
             activeClue.textContent = 'DONE';
