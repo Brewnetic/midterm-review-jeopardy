@@ -8,53 +8,71 @@
         :root {
             --jeopardy-blue: #060ce9;
             --jeopardy-gold: #ffcc00;
+            --dark-bg: #111;
         }
 
         body {
             font-family: 'Helvetica Neue', sans-serif;
-            background-color: #111;
+            background-color: var(--dark-bg);
             color: #fff;
             text-align: center;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
         }
 
         header h1 {
             color: var(--jeopardy-gold);
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+            font-size: 1.5em;
+        }
+
+        #rules-btn {
+            background-color: var(--jeopardy-blue);
+            color: var(--jeopardy-gold);
+            border: 2px solid var(--jeopardy-gold);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         #game-board {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 10px;
-            margin: 20px auto;
-            max-width: 1200px;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 5px;
+            margin: 15px auto;
+            max-width: 1600px;
         }
 
         .category, .clue {
             background-color: var(--jeopardy-blue);
-            padding: 20px;
-            border-radius: 5px;
+            padding: 8px;
+            border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            min-height: 60px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-weight: bold;
         }
 
         .category {
-            font-weight: bold;
             color: #fff;
             text-transform: uppercase;
-            font-size: 1.1em;
+            font-size: 0.8em;
         }
 
         .clue {
             color: var(--jeopardy-gold);
-            font-size: 2.5em;
-            font-weight: bold;
+            font-size: 1.5em;
             cursor: pointer;
             transition: transform 0.2s;
         }
@@ -68,11 +86,22 @@
             color: #555;
             cursor: not-allowed;
             pointer-events: none;
-            font-size: 1.5em;
+            font-size: 1.2em;
+        }
+        
+        .code-snippet {
+            font-family: monospace;
+            background-color: #222;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: left;
+            display: inline-block;
+            white-space: pre;
+            font-size: 0.8em;
         }
 
-        /* Modal is hidden by default with display: none */
-        #modal {
+        /* Modal Styles */
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -85,7 +114,7 @@
             z-index: 100;
         }
 
-        #modal-content {
+        .modal-content {
             background-color: var(--jeopardy-blue);
             padding: 40px;
             border-radius: 10px;
@@ -99,15 +128,30 @@
             text-align: center;
             border: 5px solid var(--jeopardy-gold);
         }
+        
+        #rules-modal .modal-content {
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        #rules-modal ul {
+            list-style-type: square;
+            font-size: 1.2em;
+            padding-left: 30px;
+        }
+        
+        #rules-modal li {
+            margin-bottom: 15px;
+        }
 
         #question-text {
-            font-size: 2em;
+            font-size: 1.8em;
             margin-bottom: 20px;
             color: #fff;
         }
 
         #answer-text {
-            font-size: 1.8em;
+            font-size: 1.6em;
             margin-top: 20px;
             color: var(--jeopardy-gold);
             font-weight: bold;
@@ -117,7 +161,7 @@
             display: none;
         }
 
-        #modal button {
+        .modal-content button {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 1em;
@@ -133,97 +177,187 @@
 
     <header>
         <h1>CS 122: OBJECT-ORIENTED PROGRAMMING MIDTERM REVIEW</h1>
+        <button id="rules-btn">Game Rules</button>
     </header>
 
     <div id="game-board">
         </div>
     
-    <div id="modal">
-        <div id="modal-content">
+    <div id="question-modal" class="modal">
+        <div class="modal-content">
             <div id="question-text"></div>
             <button id="reveal-answer-btn">Reveal Answer</button>
             <div id="answer-text" class="answer-hidden"></div>
-            <button id="close-modal-btn">Close</button>
+            <button id="close-question-btn">Close</button>
+        </div>
+    </div>
+
+    <div id="rules-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--jeopardy-gold); text-align: center; width: 100%;">Jeopardy Rules</h2>
+            <ul>
+                <li>The class will be divided into teams.</li>
+                <li>A team selects a category and a point value.</li>
+                <li>The host reads the "answer".</li>
+                <li>The first team to buzz in must respond in the form of a question (e.g., "What is a class?").</li>
+                <li>A correct response earns the point value. An incorrect response deducts the point value.</li>
+            </ul>
+            <button id="close-rules-btn">Close</button>
         </div>
     </div>
     
     <script>
-        // Wait for the entire page to load before running the script
         document.addEventListener('DOMContentLoaded', () => {
 
             const gameData = [
+                // Category 1
                 {
                     category: "Java Fundamentals",
                     questions: [
-                        { points: 100, answer: "The machine that runs Java bytecode, enabling the 'Write Once, Run Anywhere' principle.", question: "What is the JVM (Java Virtual Machine)?" },
-                        { points: 200, answer: "This type of error, like a missing semicolon, is caught by the compiler before the program can run.", question: "What is a compile-time error?" },
-                        { points: 300, answer: "The four components of the `main` method signature are `public`, `static`, `void`, and this parameter.", question: "What is `String[] args`?" },
-                        { points: 400, answer: "This keyword marks a variable as a constant whose value cannot be changed after initialization.", question: "What is `final`?" },
-                        { points: 500, answer: "A program that runs without errors but produces an incorrect result has this type of error.", question: "What is a logical error?" }
+                        { points: 100, answer: "A program is made up of one or more of these.", question: "What are classes?" },
+                        { points: 200, answer: "This type of error is caught by the compiler, for example a syntax error.", question: "What is a compile-time error?" },
+                        { points: 300, answer: "The machine that runs Java bytecode.", question: "What is the JVM (Java Virtual Machine)?" },
+                        { points: 400, answer: "This keyword marks a variable as a constant.", question: "What is `final`?" },
+                        { points: 500, answer: "Fill in the blank for the program's entry point: <br><code class='code-snippet'>public static void ______(String[] args)</code>", question: "What is `main`?" },
+                        { points: 600, answer: "The three main types of errors in programming.", question: "What are compile-time, run-time, and logical errors?" },
+                        { points: 700, answer: "In Java, all code must live inside this.", question: "What is a class?" },
+                        { points: 800, answer: "This type of comment starts with `/*` and ends with `*/`.", question: "What is a multi-line comment?" },
+                        { points: 900, answer: "In `public static void main`, this keyword means the method belongs to the class, not an object.", question: "What is `static`?" }
                     ]
                 },
+                // Category 2
                 {
                     category: "Data & Input",
                     questions: [
-                        { points: 100, answer: "Java's 8 of these include `int`, `double`, `char`, and `boolean`.", question: "What are primitive data types?" },
-                        { points: 200, answer: "This class must be imported from `java.util` to get input from the user.", question: "What is the `Scanner` class?" },
-                        { points: 300, answer: "While a `char` is in single quotes, this object type for text is in double quotes.", question: "What is a `String`?" },
-                        { points: 400, answer: "The naming convention for variables like `studentName` or `courseCode`.", question: "What is camelCase?" },
-                        { points: 500, answer: "The object representation for the primitive `int`.", question: "What is the `Integer` wrapper class?" }
+                        { points: 100, answer: "Java's 8 of these include `int`, `double`, and `boolean`.", question: "What are primitive data types?" },
+                        { points: 200, answer: "The data type for a single character, enclosed in single quotes.", question: "What is a `char`?" },
+                        { points: 300, answer: "This class from `java.util` is used to get user input.", question: "What is the `Scanner` class?" },
+                        { points: 400, answer: "The naming convention for variables like `studentName`.", question: "What is camelCase?" },
+                        { points: 500, answer: "The object representation of a primitive type, like `Integer` for `int`.", question: "What is a Wrapper Class?" },
+                        { points: 600, answer: "This bug occurs when mixing `nextInt()` and `nextLine()` without consuming the leftover newline character.", question: "What is the scanner newline issue?" },
+                        { points: 700, answer: "A variable of this type can only hold the values `true` or `false`.", question: "What is a `boolean`?" },
+                        { points: 800, answer: "This automatically imported package contains `String`, `System`, and Wrapper Classes.", question: "What is `java.lang`?" },
+                        { points: 900, answer: "The default value for an uninitialized `int` instance variable.", question: "What is 0?" }
                     ]
                 },
+                // Category 3
                 {
                     category: "Operators & Casting",
                     questions: [
-                        { points: 100, answer: "This arithmetic operator gives you the remainder of a division.", question: "What is the modulo operator (`%`)?" },
-                        { points: 200, answer: "The result of the integer division expression `9 / 2`.", question: "What is 4?" },
-                        { points: 300, answer: "This is the shorthand operator for `x = x + 1;`.", question: "What is `x++` (or `++x`)?" },
-                        { points: 400, answer: "The term for explicitly converting a value, such as `(int) 3.14`.", question: "What is type casting?" },
-                        { points: 500, answer: "The final string output from the expression `\"Result: \" + 5 + 3`.", question: "What is `\"Result: 53\"`?" }
+                        { points: 100, answer: "This operator, `%`, gives the remainder of a division.", question: "What is modulo?" },
+                        { points: 200, answer: "The result of `9 / 2` in integer division.", question: "What is 4?" },
+                        { points: 300, answer: "The shorthand for `x = x + 1;`.", question: "What is `x++` or `++x`?" },
+                        { points: 400, answer: "The output of: <br><code class='code-snippet'>System.out.println(\"Val: \" + 5 + 3);</code>", question: "What is `Val: 53`?" },
+                        { points: 500, answer: "Explicitly converting a value, such as `(int) 9.9`.", question: "What is type casting?" },
+                        { points: 600, answer: "The output of: <br><code class='code-snippet'>System.out.println(\"Val: \" + (5 + 3));</code>", question: "What is `Val: 8`?" },
+                        { points: 700, answer: "The value of `z` after: <br><code class='code-snippet'>int x = 5; int y = 2;\ndouble z = (double)x / y;</code>", question: "What is 2.5?" },
+                        { points: 800, answer: "This phenomenon occurs when an `int` exceeds its maximum value.", question: "What is integer overflow?" },
+                        { points: 900, answer: "The precise output of: `System.out.println(5.0 / 2.0 + 2);`.", question: "What is 4.5?" }
                     ]
                 },
+                // Category 4
                 {
                     category: "String Mania",
                     questions: [
                         { points: 100, answer: "This method returns the number of characters in a String.", question: "What is `.length()`?" },
-                        { points: 200, answer: "The principle that once a String is created, it cannot be changed.", question: "What is immutability?" },
-                        { points: 300, answer: "The correct method to compare the contents of two Strings, not `==`.", question: "What is `.equals()`?" },
-                        { points: 400, answer: "Given `String s = \"Java\";`, this method call returns the character `'v'`.", question: "What is `s.charAt(2)`?" },
-                        { points: 500, answer: "Given `String url = \"www.pace.edu\";`, this call extracts the substring `\"pace\"`.", question: "What is `url.substring(4, 8)`?" }
+                        { points: 200, answer: "The correct method to compare the contents of two Strings.", question: "What is `.equals()`?" },
+                        { points: 300, answer: "The principle that Strings cannot be changed once created.", question: "What is immutability?" },
+                        { points: 400, answer: "The character at index 2 in the string `\"Java\"`.", question: "What is 'v'?" },
+                        { points: 500, answer: "Fill in the blank for formatted printing: <br><code class='code-snippet'>System.out.printf(\"%.2__\", 19.99);</code>", question: "What is `f`?" },
+                        { points: 600, answer: "The output of: `\"Pace\".substring(1, 3)`.", question: "What is `\"ac\"`?" },
+                        { points: 700, answer: "This is why `name = name.toUpperCase();` is necessary to change the `name` variable.", question: "What is because Strings are immutable?" },
+                        { points: 800, answer: "The output of: <br><code class='code-snippet'>String s = \"CS122\";\nSystem.out.println(s.indexOf(\"2\"));</code>", question: "What is 3?" },
+                        { points: 900, answer: "The output of: <br><code class='code-snippet'>String s1 = \"Hi\";\nString s2 = new String(\"Hi\");\nSystem.out.println(s1 == s2);</code>", question: "What is `false`?" }
                     ]
                 },
+                // Category 5
                 {
-                    category: "Control Flow & Arrays",
+                    category: "Control Flow",
                     questions: [
-                        { points: 100, answer: "This statement executes a block of code only if a condition is true.", question: "What is an `if` statement?" },
-                        { points: 200, answer: "This logical operator (`||`) returns true if at least one of its conditions is true.", question: "What is the OR operator?" },
-                        { points: 300, answer: "The index of the very first element in an array.", question: "What is 0?" },
-                        { points: 400, answer: "This type of loop is ideal when you know exactly how many times you want to repeat code.", question: "What is a `for` loop?" },
-                        { points: 500, answer: "The keyword used to exit a `switch` case or terminate a loop prematurely.", question: "What is `break`?" }
+                        { points: 100, answer: "This statement is used to make a decision.", question: "What is an `if` statement?" },
+                        { points: 200, answer: "The logical `AND` operator.", question: "What is `&&`?" },
+                        { points: 300, answer: "This type of loop is ideal for a known number of iterations.", question: "What is a `for` loop?" },
+                        { points: 400, answer: "This keyword exits a loop or a switch case.", question: "What is `break`?" },
+                        { points: 500, answer: "The output of this loop: <br><code class='code-snippet'>for (int i=1; i<=3; i++) {\n  System.out.print(i);\n}</code>", question: "What is `123`?" },
+                        { points: 600, answer: "The keyword in a `switch` that handles unmatched cases.", question: "What is `default`?" },
+                        { points: 700, answer: "A loop that continues as long as a condition is true.", question: "What is a `while` loop?" },
+                        { points: 800, answer: "This loop is guaranteed to run at least once.", question: "What is a `do-while` loop?" },
+                        { points: 900, answer: "This enhanced loop iterates over elements of an array or collection without using an index.", question: "What is a `foreach` loop?" }
                     ]
                 },
+                // Category 6
+                {
+                    category: "Arrays",
+                    questions: [
+                        { points: 100, answer: "The index of the first element in an array.", question: "What is 0?" },
+                        { points: 200, answer: "This property gives the number of elements in an array.", question: "What is `.length`?" },
+                        { points: 300, answer: "The error thrown when you try to access an index that doesn't exist.", question: "What is an `ArrayIndexOutOfBoundsException`?" },
+                        { points: 400, answer: "The statement to declare an integer array named `scores` that can hold 10 values.", question: "What is `int[] scores = new int[10];`?" },
+                        { points: 500, answer: "Fill in the blanks to access the center of a 3x3 `board` array: <br><code class='code-snippet'>board[__][__];</code>", question: "What is `[1][1]`?" },
+                        { points: 600, answer: "The method used to get a printable string representation of an array's contents.", question: "What is `Arrays.toString()`?" },
+                        { points: 700, answer: "The value of `nums[2]` after this code: <br><code class='code-snippet'>int[] nums = {10, 20, 30, 40};\nnums[2] = 50;</code>", question: "What is 50?" },
+                        { points: 800, answer: "A 2D array is best for representing this type of data structure.", question: "What is a grid or table?" },
+                        { points: 900, answer: "How you declare and initialize a String array named `days` with three values: \"Mon\", \"Wed\", \"Fri\".", question: "What is `String[] days = {\"Mon\", \"Wed\", \"Fri\"};`?" }
+                    ]
+                },
+                 // Category 7
+                {
+                    category: "Methods & Scope",
+                    questions: [
+                        { points: 100, answer: "A method declared with this return type performs an action but does not return a value.", question: "What is `void`?" },
+                        { points: 200, answer: "The values passed into a method when it is called.", question: "What are arguments?" },
+                        { points: 300, answer: "The variables in a method's definition that accept values.", question: "What are parameters?" },
+                        { points: 400, answer: "This keyword is used inside a method to send a value back to the caller.", question: "What is `return`?" },
+                        { points: 500, answer: "This term describes having multiple methods with the same name but different parameter lists.", question: "What is method overloading?" },
+                        { points: 600, answer: "When a primitive type like `int` is passed to a method, the method receives a copy of this.", question: "What is the value (pass-by-value)?" },
+                        { points: 700, answer: "The concept that a variable is only accessible within the block of code where it is defined.", question: "What is variable scope?" },
+                        { points: 800, answer: "A variable declared inside a `for` loop has this kind of scope.", question: "What is local or loop scope?" },
+                        { points: 900, answer: "True or False: A method in Java can change the value of an original primitive variable that was passed to it as an argument.", question: "What is `false`?" }
+                    ]
+                },
+                // Category 8
                 {
                     category: "OOP Pillars",
                     questions: [
                         { points: 100, answer: "A blueprint or template for creating objects.", question: "What is a Class?" },
-                        { points: 200, answer: "This special method shares the class name and initializes a new object.", question: "What is a Constructor?" },
-                        { points: 300, answer: "Bundling data and methods together, controlling access with getters/setters.", question: "What is Encapsulation?" },
-                        { points: 400, answer: "The principle where a child class acquires properties from a parent class.", question: "What is Inheritance?" },
-                        { points: 500, answer: "A class that cannot be instantiated and is a template for subclasses.", question: "What is an Abstract Class?" }
+                        { points: 200, answer: "An instance of a class.", question: "What is an Object?" },
+                        { points: 300, answer: "A special method that shares the class name and initializes an object.", question: "What is a Constructor?" },
+                        { points: 400, answer: "Bundling data and methods together, often hiding data with the `private` keyword.", question: "What is Encapsulation?" },
+                        { points: 500, answer: "The `is-a` relationship, where a subclass inherits from a superclass using `extends`.", question: "What is Inheritance?" },
+                        { points: 600, answer: "Hiding complex implementation details and showing only essential features.", question: "What is Abstraction?" },
+                        { points: 700, answer: "When a subclass provides its own implementation for a method from its parent class.", question: "What is method overriding?" },
+                        { points: 800, answer: "The 'many forms' pillar of OOP, including both method overriding and overloading.", question: "What is Polymorphism?" },
+                        { points: 900, answer: "Fill in the blank: <br><code class='code-snippet'>public class Car ______ Vehicle { ... }</code>", question: "What is `extends`?" }
+                    ]
+                },
+                // Category 9
+                {
+                    category: "Data Organization",
+                    questions: [
+                        { points: 100, answer: "The acronym for a Plain Old Java Object.", question: "What is a POJO?" },
+                        { points: 200, answer: "Public methods used to access private fields, like `getName()`.", question: "What are getters?" },
+                        { points: 300, answer: "Public methods used to modify private fields, like `setName()`.", question: "What are setters?" },
+                        { points: 400, answer: "A way to organize related classes into a namespace, like `java.util`.", question: "What is a package?" },
+                        { points: 500, answer: "The statement used at the top of a file to use a class from another package.", question: "What is `import`?" },
+                        { points: 600, answer: "These classes, like `Integer` and `Double`, provide object representations for primitive types.", question: "What are Wrapper Classes?" },
+                        { points: 700, answer: "The main reason Wrapper classes are necessary for data structures like `ArrayList`.", question: "What is because collections can only hold objects, not primitives?" },
+                        { points: 800, answer: "The standard naming convention for packages, based on a company's web address.", question: "What is the reverse domain name convention?" },
+                        { points: 900, answer: "This package is automatically imported into every Java file.", question: "What is `java.lang`?" }
                     ]
                 }
             ];
 
             const gameBoard = document.getElementById('game-board');
-            const modal = document.getElementById('modal');
+            const questionModal = document.getElementById('question-modal');
             const questionText = document.getElementById('question-text');
             const answerText = document.getElementById('answer-text');
             const revealAnswerBtn = document.getElementById('reveal-answer-btn');
-            const closeModalBtn = document.getElementById('close-modal-btn');
+            const closeQuestionBtn = document.getElementById('close-question-btn');
+            const rulesBtn = document.getElementById('rules-btn');
+            const rulesModal = document.getElementById('rules-modal');
+            const closeRulesBtn = document.getElementById('close-rules-btn');
 
-            // --- Game Board Generation ---
             function setupBoard() {
-                // Create category headers
                 gameData.forEach((cat) => {
                     const categoryDiv = document.createElement('div');
                     categoryDiv.classList.add('category');
@@ -231,9 +365,8 @@
                     gameBoard.appendChild(categoryDiv);
                 });
 
-                // Create clue squares
-                for (let i = 0; i < 5; i++) { // For each point value
-                    gameData.forEach((cat, catIndex) => { // For each category
+                for (let i = 0; i < 9; i++) {
+                    gameData.forEach((cat, catIndex) => {
                         const clue = cat.questions[i];
                         const clueDiv = document.createElement('div');
                         clueDiv.classList.add('clue');
@@ -246,8 +379,8 @@
             }
 
             let activeClue = null;
+            let answerWasRevealed = false; // <-- NEW: State variable to track if the answer was shown
 
-            // --- Event Listeners ---
             gameBoard.addEventListener('click', (e) => {
                 const clueElement = e.target;
                 if (clueElement.classList.contains('clue') && !clueElement.classList.contains('answered')) {
@@ -255,28 +388,43 @@
                     const { catIndex, clueIndex } = activeClue.dataset;
                     const questionData = gameData[catIndex].questions[clueIndex];
                     
-                    // Populate and show the modal
-                    questionText.textContent = questionData.answer;
-                    answerText.textContent = questionData.question;
+                    answerWasRevealed = false; // <-- NEW: Reset state for each new question
+                    
+                    questionText.innerHTML = questionData.answer;
+                    answerText.innerHTML = questionData.question;
                     
                     answerText.classList.add('answer-hidden');
                     revealAnswerBtn.style.display = 'block';
-                    modal.style.display = 'flex'; // This makes the modal visible
+                    questionModal.style.display = 'flex';
                 }
             });
 
             revealAnswerBtn.addEventListener('click', () => {
                 answerText.classList.remove('answer-hidden');
                 revealAnswerBtn.style.display = 'none';
+                answerWasRevealed = true; // <-- NEW: Set state to true when answer is revealed
             });
             
-            closeModalBtn.addEventListener('click', () => {
-                modal.style.display = 'none'; // This hides the modal
-                if (activeClue) {
+            closeQuestionBtn.addEventListener('click', () => {
+                questionModal.style.display = 'none';
+                
+                // --- NEW LOGIC ---
+                // Only mark as answered if the "Reveal Answer" button was clicked
+                if (activeClue && answerWasRevealed) {
                     activeClue.classList.add('answered');
                     activeClue.textContent = 'DONE';
-                    activeClue = null;
                 }
+                
+                activeClue = null; // Always reset the active clue
+            });
+
+            // --- Rules Modal Listeners ---
+            rulesBtn.addEventListener('click', () => {
+                rulesModal.style.display = 'flex';
+            });
+            
+            closeRulesBtn.addEventListener('click', () => {
+                rulesModal.style.display = 'none';
             });
 
             // --- Initialize the Game ---
