@@ -347,7 +347,6 @@
                 }
             ];
 
-            // --- Get DOM Elements ---
             const gameBoard = document.getElementById('game-board');
             const questionModal = document.getElementById('question-modal');
             const questionText = document.getElementById('question-text');
@@ -358,7 +357,6 @@
             const rulesModal = document.getElementById('rules-modal');
             const closeRulesBtn = document.getElementById('close-rules-btn');
 
-            // --- Game Board Generation ---
             function setupBoard() {
                 gameData.forEach((cat) => {
                     const categoryDiv = document.createElement('div');
@@ -367,7 +365,6 @@
                     gameBoard.appendChild(categoryDiv);
                 });
 
-                // UPDATED: Now loops 9 times for the new tiers
                 for (let i = 0; i < 9; i++) {
                     gameData.forEach((cat, catIndex) => {
                         const clue = cat.questions[i];
@@ -382,14 +379,16 @@
             }
 
             let activeClue = null;
+            let answerWasRevealed = false; // <-- NEW: State variable to track if the answer was shown
 
-            // --- Event Listeners ---
             gameBoard.addEventListener('click', (e) => {
                 const clueElement = e.target;
                 if (clueElement.classList.contains('clue') && !clueElement.classList.contains('answered')) {
                     activeClue = clueElement;
                     const { catIndex, clueIndex } = activeClue.dataset;
                     const questionData = gameData[catIndex].questions[clueIndex];
+                    
+                    answerWasRevealed = false; // <-- NEW: Reset state for each new question
                     
                     questionText.innerHTML = questionData.answer;
                     answerText.innerHTML = questionData.question;
@@ -403,15 +402,20 @@
             revealAnswerBtn.addEventListener('click', () => {
                 answerText.classList.remove('answer-hidden');
                 revealAnswerBtn.style.display = 'none';
+                answerWasRevealed = true; // <-- NEW: Set state to true when answer is revealed
             });
             
             closeQuestionBtn.addEventListener('click', () => {
                 questionModal.style.display = 'none';
-                if (activeClue) {
+                
+                // --- NEW LOGIC ---
+                // Only mark as answered if the "Reveal Answer" button was clicked
+                if (activeClue && answerWasRevealed) {
                     activeClue.classList.add('answered');
                     activeClue.textContent = 'DONE';
-                    activeClue = null;
                 }
+                
+                activeClue = null; // Always reset the active clue
             });
 
             // --- Rules Modal Listeners ---
