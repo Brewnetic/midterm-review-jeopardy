@@ -44,6 +44,36 @@
             font-weight: bold;
         }
 
+        #scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+
+        .team {
+            background-color: #222;
+            padding: 15px 25px;
+            border-radius: 8px;
+            width: 30%;
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+
+        .team.active {
+            box-shadow: 0 0 20px var(--jeopardy-gold);
+            transform: scale(1.05);
+        }
+
+        .team-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--jeopardy-gold);
+        }
+
+        .team-score {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
         #game-board {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -107,7 +137,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.9);
             display: none;
             justify-content: center;
             align-items: center;
@@ -128,41 +158,29 @@
             text-align: center;
             border: 5px solid var(--jeopardy-gold);
         }
+
+        #setup-modal input {
+            font-size: 1.2em;
+            padding: 10px;
+            margin: 10px;
+            width: 80%;
+        }
         
-        #rules-modal .modal-content {
+        #rules-modal .modal-content, #setup-modal .modal-content {
             align-items: flex-start;
             text-align: left;
         }
 
-        #rules-modal ul {
-            list-style-type: square;
-            font-size: 1.2em;
-            padding-left: 30px;
-        }
-        
-        #rules-modal li {
-            margin-bottom: 15px;
-        }
+        #rules-modal ul { list-style-type: square; font-size: 1.2em; padding-left: 30px; }
+        #rules-modal li { margin-bottom: 15px; }
 
-        #question-text {
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            color: #fff;
-        }
+        #question-text { font-size: 1.8em; margin-bottom: 20px; color: #fff; }
+        #answer-text { font-size: 1.6em; margin-top: 20px; color: var(--jeopardy-gold); font-weight: bold; }
 
-        #answer-text {
-            font-size: 1.6em;
-            margin-top: 20px;
-            color: var(--jeopardy-gold);
-            font-weight: bold;
-        }
-
-        .answer-hidden {
-            display: none;
-        }
+        .hidden { display: none !important; }
 
         .modal-content button {
-            margin-top: 20px;
+            margin: 10px;
             padding: 10px 20px;
             font-size: 1em;
             cursor: pointer;
@@ -170,7 +188,11 @@
             border: none;
             background-color: var(--jeopardy-gold);
             color: #000;
+            font-weight: bold;
         }
+        
+        #correct-btn { background-color: #28a745; color: white; }
+        #incorrect-btn { background-color: #dc3545; color: white; }
     </style>
 </head>
 <body>
@@ -180,15 +202,34 @@
         <button id="rules-btn">Game Rules</button>
     </header>
 
-    <div id="game-board">
+    <div id="scoreboard">
+        <div id="team1" class="team">
+            <div id="team1-name" class="team-name">Team 1</div>
+            <div id="team1-score" class="team-score">0</div>
         </div>
+        <div id="team2" class="team">
+            <div id="team2-name" class="team-name">Team 2</div>
+            <div id="team2-score" class="team-score">0</div>
+        </div>
+    </div>
+
+    <div id="game-board"></div>
     
     <div id="question-modal" class="modal">
         <div class="modal-content">
             <div id="question-text"></div>
-            <button id="reveal-answer-btn">Reveal Answer</button>
-            <div id="answer-text" class="answer-hidden"></div>
-            <button id="close-question-btn">Close</button>
+            
+            <div id="pre-reveal-btns">
+                <button id="reveal-answer-btn">Reveal Answer</button>
+                <button id="cancel-question-btn">Cancel</button>
+            </div>
+
+            <div id="answer-text" class="hidden"></div>
+            
+            <div id="post-reveal-btns" class="hidden">
+                <button id="correct-btn">Correct</button>
+                <button id="incorrect-btn">Incorrect</button>
+            </div>
         </div>
     </div>
 
@@ -196,13 +237,22 @@
         <div class="modal-content">
             <h2 style="color: var(--jeopardy-gold); text-align: center; width: 100%;">Jeopardy Rules</h2>
             <ul>
-                <li>The class will be divided into teams.</li>
-                <li>A team selects a category and a point value.</li>
-                <li>The host reads the "answer".</li>
-                <li>The first team to buzz in must respond in the form of a question (e.g., "What is a class?").</li>
-                <li>A correct response earns the point value. An incorrect response deducts the point value.</li>
+                <li>The class will be divided into two teams.</li>
+                <li>The active team selects a category and a point value.</li>
+                <li>After the answer is revealed, the team responds.</li>
+                <li>If the response is correct, the team earns the point value and keeps control.</li>
+                <li>If the response is incorrect, the team loses the point value and control passes to the other team.</li>
             </ul>
             <button id="close-rules-btn">Close</button>
+        </div>
+    </div>
+
+    <div id="setup-modal" class="modal" style="display: flex;">
+        <div class="modal-content">
+            <h2 style="color: var(--jeopardy-gold); text-align: center; width: 100%;">Enter Team Names</h2>
+            <input type="text" id="team1-input" placeholder="Enter Team 1 Name" value="Team 1">
+            <input type="text" id="team2-input" placeholder="Enter Team 2 Name" value="Team 2">
+            <button id="start-game-btn">Start Game</button>
         </div>
     </div>
     
@@ -210,7 +260,6 @@
         document.addEventListener('DOMContentLoaded', () => {
 
             const gameData = [
-                // Category 1
                 {
                     category: "Java Fundamentals",
                     questions: [
@@ -225,7 +274,6 @@
                         { points: 900, answer: "In `public static void main`, this keyword means the method belongs to the class, not an object.", question: "What is `static`?" }
                     ]
                 },
-                // Category 2
                 {
                     category: "Data & Input",
                     questions: [
@@ -240,7 +288,6 @@
                         { points: 900, answer: "The default value for an uninitialized `int` instance variable.", question: "What is 0?" }
                     ]
                 },
-                // Category 3
                 {
                     category: "Operators & Casting",
                     questions: [
@@ -255,7 +302,6 @@
                         { points: 900, answer: "The precise output of: `System.out.println(5.0 / 2.0 + 2);`.", question: "What is 4.5?" }
                     ]
                 },
-                // Category 4
                 {
                     category: "String Mania",
                     questions: [
@@ -270,7 +316,6 @@
                         { points: 900, answer: "The output of: <br><code class='code-snippet'>String s1 = \"Hi\";\nString s2 = new String(\"Hi\");\nSystem.out.println(s1 == s2);</code>", question: "What is `false`?" }
                     ]
                 },
-                // Category 5
                 {
                     category: "Control Flow",
                     questions: [
@@ -285,7 +330,6 @@
                         { points: 900, answer: "This enhanced loop iterates over elements of an array or collection without using an index.", question: "What is a `foreach` loop?" }
                     ]
                 },
-                // Category 6
                 {
                     category: "Arrays",
                     questions: [
@@ -300,7 +344,6 @@
                         { points: 900, answer: "How you declare and initialize a String array named `days` with three values: \"Mon\", \"Wed\", \"Fri\".", question: "What is `String[] days = {\"Mon\", \"Wed\", \"Fri\"};`?" }
                     ]
                 },
-                 // Category 7
                 {
                     category: "Methods & Scope",
                     questions: [
@@ -315,7 +358,6 @@
                         { points: 900, answer: "True or False: A method in Java can change the value of an original primitive variable that was passed to it as an argument.", question: "What is `false`?" }
                     ]
                 },
-                // Category 8
                 {
                     category: "OOP Pillars",
                     questions: [
@@ -330,7 +372,6 @@
                         { points: 900, answer: "Fill in the blank: <br><code class='code-snippet'>public class Car ______ Vehicle { ... }</code>", question: "What is `extends`?" }
                     ]
                 },
-                // Category 9
                 {
                     category: "Data Organization",
                     questions: [
@@ -347,17 +388,44 @@
                 }
             ];
 
+            // --- Get DOM Elements ---
             const gameBoard = document.getElementById('game-board');
             const questionModal = document.getElementById('question-modal');
             const questionText = document.getElementById('question-text');
             const answerText = document.getElementById('answer-text');
             const revealAnswerBtn = document.getElementById('reveal-answer-btn');
-            const closeQuestionBtn = document.getElementById('close-question-btn');
+            const cancelQuestionBtn = document.getElementById('cancel-question-btn');
+            const correctBtn = document.getElementById('correct-btn');
+            const incorrectBtn = document.getElementById('incorrect-btn');
+            const preRevealBtns = document.getElementById('pre-reveal-btns');
+            const postRevealBtns = document.getElementById('post-reveal-btns');
             const rulesBtn = document.getElementById('rules-btn');
             const rulesModal = document.getElementById('rules-modal');
             const closeRulesBtn = document.getElementById('close-rules-btn');
+            const setupModal = document.getElementById('setup-modal');
+            const startGameBtn = document.getElementById('start-game-btn');
+
+            // --- State Variables ---
+            let teams = [ { name: "Team 1", score: 0 }, { name: "Team 2", score: 0 } ];
+            let activeTeamIndex = 0;
+            let currentQuestionValue = 0;
+            let activeClue = null;
+            let answerWasRevealed = false;
+            
+            // --- Functions ---
+            function updateScoreboard() {
+                document.getElementById('team1-name').textContent = teams[0].name;
+                document.getElementById('team1-score').textContent = teams[0].score;
+                document.getElementById('team2-name').textContent = teams[1].name;
+                document.getElementById('team2-score').textContent = teams[1].score;
+
+                document.getElementById('team1').classList.remove('active');
+                document.getElementById('team2').classList.remove('active');
+                document.getElementById(`team${activeTeamIndex + 1}`).classList.add('active');
+            }
 
             function setupBoard() {
+                gameBoard.innerHTML = '';
                 gameData.forEach((cat) => {
                     const categoryDiv = document.createElement('div');
                     categoryDiv.classList.add('category');
@@ -373,62 +441,82 @@
                         clueDiv.textContent = `$${clue.points}`;
                         clueDiv.dataset.catIndex = catIndex;
                         clueDiv.dataset.clueIndex = i;
+                        clueDiv.dataset.points = clue.points;
                         gameBoard.appendChild(clueDiv);
                     });
                 }
             }
+            
+            function closeQuestion(markAsDone) {
+                questionModal.style.display = 'none';
+                if (activeClue && markAsDone) {
+                    activeClue.classList.add('answered');
+                    activeClue.textContent = 'DONE';
+                }
+                activeClue = null;
+            }
 
-            let activeClue = null;
-            let answerWasRevealed = false; // <-- NEW: State variable to track if the answer was shown
-
+            // --- Event Listeners ---
+            startGameBtn.addEventListener('click', () => {
+                const team1Name = document.getElementById('team1-input').value.trim() || "Team 1";
+                const team2Name = document.getElementById('team2-input').value.trim() || "Team 2";
+                teams[0].name = team1Name;
+                teams[1].name = team2Name;
+                setupModal.style.display = 'none';
+                updateScoreboard();
+            });
+            
             gameBoard.addEventListener('click', (e) => {
                 const clueElement = e.target;
                 if (clueElement.classList.contains('clue') && !clueElement.classList.contains('answered')) {
                     activeClue = clueElement;
-                    const { catIndex, clueIndex } = activeClue.dataset;
+                    const { catIndex, clueIndex, points } = activeClue.dataset;
+                    currentQuestionValue = parseInt(points);
                     const questionData = gameData[catIndex].questions[clueIndex];
                     
-                    answerWasRevealed = false; // <-- NEW: Reset state for each new question
+                    answerWasRevealed = false;
                     
                     questionText.innerHTML = questionData.answer;
                     answerText.innerHTML = questionData.question;
                     
-                    answerText.classList.add('answer-hidden');
-                    revealAnswerBtn.style.display = 'block';
+                    answerText.classList.add('hidden');
+                    preRevealBtns.classList.remove('hidden');
+                    postRevealBtns.classList.add('hidden');
+                    
                     questionModal.style.display = 'flex';
                 }
             });
 
             revealAnswerBtn.addEventListener('click', () => {
-                answerText.classList.remove('answer-hidden');
-                revealAnswerBtn.style.display = 'none';
-                answerWasRevealed = true; // <-- NEW: Set state to true when answer is revealed
+                answerText.classList.remove('hidden');
+                preRevealBtns.classList.add('hidden');
+                postRevealBtns.classList.remove('hidden');
+                answerWasRevealed = true;
             });
             
-            closeQuestionBtn.addEventListener('click', () => {
-                questionModal.style.display = 'none';
-                
-                // --- NEW LOGIC ---
-                // Only mark as answered if the "Reveal Answer" button was clicked
-                if (activeClue && answerWasRevealed) {
-                    activeClue.classList.add('answered');
-                    activeClue.textContent = 'DONE';
-                }
-                
-                activeClue = null; // Always reset the active clue
+            cancelQuestionBtn.addEventListener('click', () => {
+                closeQuestion(false); // Do not mark as done
             });
 
-            // --- Rules Modal Listeners ---
-            rulesBtn.addEventListener('click', () => {
-                rulesModal.style.display = 'flex';
-            });
-            
-            closeRulesBtn.addEventListener('click', () => {
-                rulesModal.style.display = 'none';
+            correctBtn.addEventListener('click', () => {
+                teams[activeTeamIndex].score += currentQuestionValue;
+                updateScoreboard();
+                closeQuestion(true); // Mark as done
             });
 
-            // --- Initialize the Game ---
+            incorrectBtn.addEventListener('click', () => {
+                teams[activeTeamIndex].score -= currentQuestionValue;
+                activeTeamIndex = (activeTeamIndex + 1) % 2; // Switch to the other team
+                updateScoreboard();
+                closeQuestion(true); // Mark as done
+            });
+
+            rulesBtn.addEventListener('click', () => { rulesModal.style.display = 'flex'; });
+            closeRulesBtn.addEventListener('click', () => { rulesModal.style.display = 'none'; });
+
+            // --- Initialize ---
             setupBoard();
+            updateScoreboard();
         });
     </script>
 
