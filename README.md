@@ -38,7 +38,7 @@ The 10 categories in this game correspond directly to the 10 sections in the Mid
 
 ## How to Use This for Your Own Study
 
-You can play the [game](https://brewnetic.github.io/midterm-review-jeopardy/) anytime by clicking the link.You can also use it offline by following these steps:
+You can play the [game](https://github.com/Brewnetic/Midterm-Review-Jeopardy) anytime by clicking the link. You can also use it offline by following these steps:
 
 1.  Download the `index.html` file from this repository.
 2.  Open the file in any modern web browser (like Chrome, Firefox, or Safari).
